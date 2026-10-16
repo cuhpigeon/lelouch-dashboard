@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Read-only paper dashboard for the Kalshi KXBTC15M Safe and Bold accounts.">
+  <title>Lelouch · KXBTC15M Paper Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23161b22'/%3E%3Cpath d='M6 22 L12 14 L17 18 L26 8' fill='none' stroke='%2358a6ff' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+  <div class="top">
+    <header>
+      <div>
+        <h1>Lelouch · KXBTC15M Paper Dashboard</h1>
+        <div class="mut" id="gen">Loading…</div>
+      </div>
+      <div class="pills" id="stat" aria-label="Bot status"></div>
+    </header>
+    <div id="stale" class="banner stale" hidden>STALE</div>
+  </div>
+  <main>
+    <div id="modeBanner" class="card example" hidden></div>
+    <div class="card readonly"><b>Read-only.</b> <span class="mut">This dashboard only views data. It can't start trading or change any setting. All money shown is paper.</span></div>
+    <section class="grid" id="acct" aria-label="Accounts"></section>
+    <section class="card">
+      <h2>Equity curves</h2>
+      <div class="ch tall"><canvas id="cEq" aria-label="Equity curves"></canvas></div>
+    </section>
+    <section class="grid">
+      <div class="card">
+        <h2>Live window <span class="mut" id="liveT"></span></h2>
+        <div class="cards" id="liveK"></div>
+        <div class="ch"><canvas id="cSpot" aria-label="BTC spot versus strike"></canvas></div>
+        <div class="ch"><canvas id="cBook" aria-label="YES bid and ask"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Recent official results</h2>
+        <div class="tw" id="res"></div>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Trades</h2>
+      <div class="filters">
+        <select id="fA" aria-label="Filter by account">
+          <option value="">All accounts</option>
+          <option>safe</option>
+          <option>bold</option>
+        </select>
+        <select id="fS" aria-label="Filter by side">
+          <option value="">All sides</option>
+          <option>YES</option>
+          <option>NO</option>
+        </select>
+        <select id="fB" aria-label="Filter by price bucket">
+          <option value="">All price buckets</option>
+          <option value="&lt;20c">&lt;20c</option>
+          <option>20-30c</option>
+          <option>30-50c</option>
+          <option>50-70c</option>
+          <option>70c+</option>
+        </select>
+        <select id="fE" aria-label="Filter by exit">
+          <option value="">All exits</option>
+          <option>early exit</option>
+          <option>held to settle</option>
+        </select>
+        <select id="fR" aria-label="Filter by result">
+          <option value="">All results</option>
+          <option>win</option>
+          <option>loss</option>
+        </select>
+        <span class="mut" id="tsum"></span>
+      </div>
+      <div class="tw" id="trades"></div>
+    </section>
+    <section class="grid">
+      <div class="card">
+        <h2>Why trades were blocked</h2>
+        <div class="ch"><canvas id="cBlk" aria-label="Blocked trade reasons"></canvas></div>
+        <div id="blkEx" class="mut" style="font-size:12px"></div>
+      </div>
+      <div class="card">
+        <h2>P&amp;L by price bucket</h2>
+        <div class="ch"><canvas id="cBkt" aria-label="Profit and loss by price bucket"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>YES vs NO · exit type</h2>
+        <div class="tw" id="side"></div>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Calibration: model vs market</h2>
+      <div class="mut" id="brier"></div>
+      <div class="ch tall"><canvas id="cCal" aria-label="Reliability chart"></canvas></div>
+      <div class="mut" style="font-size:12px">X = predicted chance of YES (10% bins). Y = how often YES actually happened. Points on the dashed diagonal are well calibrated. Bins with fewer than 3 samples are noisy.</div>
+    </section>
+    <section class="card">
+      <h2>Reports</h2>
+      <div class="tabs" id="rtabs"></div>
+      <pre id="rep"></pre>
+    </section>
+    <p class="foot">KXBTC15M paper · Safe and Bold · read only</p>
+  </main>
+  <script src="vendor/chart.umd.min.js"></script>
+  <script type="module" src="js/dashboard.js"></script>
+  <noscript><p style="padding:16px">This dashboard needs JavaScript to decrypt and draw the feed.</p></noscript>
+</body>
+</html>

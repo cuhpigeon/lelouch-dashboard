@@ -1,0 +1,8 @@
+{
+  "name": "lelouch-dashboard",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node scripts/test-blob.js"
+  }
+}
