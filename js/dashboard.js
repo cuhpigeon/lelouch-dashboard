@@ -1,7 +1,9 @@
 import { ageSeconds, decryptBlob, isStale, noteStamp } from "./blob.js";
 
-const ACCOUNTS = ["safe", "bold"];
-const COL = { safe: "#58a6ff", bold: "#d29922" };
+let ACCOUNTS = ["safe", "bold", "classic"]; // replaced at render time by the keys present in the data
+const NAMES = { safe: "Safe", bold: "Bold", classic: "Bold Classic" };
+const NM = (k) => (data?.account_names || {})[k] || NAMES[k] || k;
+const COL = { safe: "#58a6ff", bold: "#d29922", classic: "#bc8cff" };
 const BUCKETS = ["<20c", "20-30c", "30-50c", "50-70c", "70c+"];
 const POLL_MS = 15000;
 
@@ -142,6 +144,12 @@ function tick() {
 }
 
 function render() {
+  if (data?.accounts) {
+    ACCOUNTS = Object.keys(data.accounts);
+    const f = $("fA"), v = f.value;
+    f.innerHTML = `<option value="">All accounts</option>` + ACCOUNTS.map((k) => `<option value="${esc(k)}">${esc(NM(k))}</option>`).join("");
+    f.value = v;
+  }
   const modeBanner = $("modeBanner");
   if (mode === "demo") {
     modeBanner.hidden = false;
@@ -198,7 +206,7 @@ function renderAccounts() {
     const a = account(k);
     const since = a.epoch_cst ? `since ${esc(a.epoch_cst)}` : "since start";
     const pnlCls = a.pnl == null ? "" : a.pnl >= 0 ? "pos" : "neg";
-    return `<div class="card acct acct-${k}"><h2 style="color:${COL[k]}">${k.toUpperCase()} <span class="mut sub">${since} · start ${usd(a.start_usd)}</span></h2>
+    return `<div class="card acct acct-${k}"><h2 style="color:${COL[k]}">${esc(NM(k)).toUpperCase()} <span class="mut sub">${since} · start ${usd(a.start_usd)}</span></h2>
       <div class="cards">
         <div class="kpi"><div class="l">Equity</div><div class="v">${usd(a.equity)}</div></div>
         <div class="kpi"><div class="l">P&amp;L</div><div class="v ${pnlCls}">${usd(a.pnl)}</div></div>
@@ -210,7 +218,7 @@ function renderAccounts() {
 
 function renderEquity() {
   const datasets = ACCOUNTS.map((k) => ({
-    label: k,
+    label: NM(k),
     borderColor: COL[k],
     backgroundColor: COL[k],
     stepped: true,
@@ -333,7 +341,7 @@ function renderTrades() {
     .map((t, i) => {
       const id = `${t.account || ""}:${t.id || i}`;
       const open = openRow === id;
-      return `<tr class="row" data-i="${i}" tabindex="0"><td>${esc(t.entry_cst)}</td><td style="color:${COL[t.account] || "inherit"}">${esc(t.account)}</td><td>${esc(t.ticker)}</td><td>${esc(t.side)}</td><td>${esc(t.price ?? "—")}</td><td>${esc(t.contracts ?? "—")}</td><td>${usd(t.cost_usd)}</td><td>${esc(t.order)}</td><td>${esc(t.exit)}</td><td class="${t.result === "win" ? "pos" : "neg"}">${esc(t.result)}</td><td class="${Number(t.pnl_usd) >= 0 ? "pos" : "neg"}">${usd(t.pnl_usd)}</td></tr>${
+      return `<tr class="row" data-i="${i}" tabindex="0"><td>${esc(t.entry_cst)}</td><td style="color:${COL[t.account] || "inherit"}">${esc(NM(t.account))}</td><td>${esc(t.ticker)}</td><td>${esc(t.side)}</td><td>${esc(t.price ?? "—")}</td><td>${esc(t.contracts ?? "—")}</td><td>${usd(t.cost_usd)}</td><td>${esc(t.order)}</td><td>${esc(t.exit)}</td><td class="${t.result === "win" ? "pos" : "neg"}">${esc(t.result)}</td><td class="${Number(t.pnl_usd) >= 0 ? "pos" : "neg"}">${usd(t.pnl_usd)}</td></tr>${
         open ? `<tr class="det"><td colspan="11">${detail(t)}</td></tr>` : ""
       }`;
     })
@@ -399,7 +407,7 @@ function renderBreakdowns() {
       data: {
         labels: cats,
         datasets: ACCOUNTS.map((k) => ({
-          label: k,
+          label: NM(k),
           backgroundColor: COL[k],
           data: cats.map((c) => account(k).blocks?.[c]?.count || 0),
         })),
@@ -412,7 +420,7 @@ function renderBreakdowns() {
         return `<div><b>${esc(c)}</b>: ${esc(sample.join(" · "))}</div>`;
       })
       .join("");
-    const skipped = ACCOUNTS.map((k) => `${k} ${account(k).no_trade_count ?? 0}`).join(", ");
+    const skipped = ACCOUNTS.map((k) => `${esc(NM(k))} ${account(k).no_trade_count ?? 0}`).join(", ");
     $("blkEx").innerHTML = `${examples}<div class="mut">Skipped windows: ${esc(skipped)}. A window can have more than one reason.</div>`;
   }
 
@@ -421,7 +429,8 @@ function renderBreakdowns() {
     data: {
       labels: BUCKETS,
       datasets: ACCOUNTS.map((k) => ({
-        label: `${k} P&L $`,
+        k,
+        label: `${NM(k)} P&L $`,
         backgroundColor: COL[k],
         data: BUCKETS.map((b) => account(k).by_bucket?.[b]?.pnl || 0),
       })),
@@ -432,7 +441,7 @@ function renderBreakdowns() {
         tooltip: {
           callbacks: {
             afterLabel: (item) => {
-              const k = item.dataset.label.split(" ")[0];
+              const k = item.dataset.k;
               const v = account(k).by_bucket?.[BUCKETS[item.dataIndex]];
               return v ? `${v.wins}/${v.n} wins` : "no trades";
             },
@@ -451,7 +460,7 @@ function renderBreakdowns() {
     ]) {
       for (const [name, v] of Object.entries(obj)) {
         sideRows.push(
-          `<tr><td style="color:${COL[k]}">${k}</td><td>${esc(grp)}</td><td>${esc(name)}</td><td>${esc(v.wins)}/${esc(v.n)}</td><td class="${Number(v.pnl) >= 0 ? "pos" : "neg"}">${usd(v.pnl)}</td></tr>`
+          `<tr><td style="color:${COL[k]}">${esc(NM(k))}</td><td>${esc(grp)}</td><td>${esc(name)}</td><td>${esc(v.wins)}/${esc(v.n)}</td><td class="${Number(v.pnl) >= 0 ? "pos" : "neg"}">${usd(v.pnl)}</td></tr>`
         );
       }
     }
@@ -462,14 +471,14 @@ function renderBreakdowns() {
 
   $("brier").innerHTML = ACCOUNTS.map((k) => {
     const c = account(k).calibration || {};
-    return `<span style="color:${COL[k]}">${k}</span>: Brier score model <b>${c.brier_model ?? "—"}</b> vs market <b>${c.brier_market ?? "—"}</b> (n=${c.n ?? 0}, lower is better)`;
+    return `<span style="color:${COL[k]}">${esc(NM(k))}</span>: Brier score model <b>${c.brier_model ?? "—"}</b> vs market <b>${c.brier_market ?? "—"}</b> (n=${c.n ?? 0}, lower is better)`;
   }).join(' <span class="mut">·</span> ');
 
   const ds = [];
   for (const k of ACCOUNTS) {
     const bins = account(k).calibration?.bins || [];
     ds.push({
-      label: `${k} model`,
+      label: `${NM(k)} model`,
       borderColor: COL[k],
       backgroundColor: COL[k],
       showLine: true,
@@ -478,7 +487,7 @@ function renderBreakdowns() {
         .filter(Boolean),
     });
     ds.push({
-      label: `${k} market`,
+      label: `${NM(k)} market`,
       borderColor: COL[k],
       borderDash: [3, 3],
       backgroundColor: "transparent",
